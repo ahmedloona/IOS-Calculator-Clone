@@ -1,65 +1,43 @@
-
-function operate(operator, operandOne, operandTwo) {
-  let operation = undefined;
-  switch (operator) {
-    case "+":
-      operation = calculator.add;
-      break;
-    case "-":
-      operation = calculator.subtract;
-      break;
-    case "X":
-      operation = calculator.multiply;
-      break;
-    case "/":
-      operation = calculator.divide;
-      break;
-    default:
-      console.log("Unsupported Operand");
-  }
-  return operation(operandOne, operandTwo);
+function userInputHasDecimal() {
+  return userInputAccumulator.includes(".");
 }
 
-function hasDecimal() {
-  return currentEntry.includes(".");
+function isUserInputAccumulatorEmpty() {
+  return (userInputAccumulator[0] == "0") && (!userInputHasDecimal());
 }
 
-function entryIsEmpty() {
-  return (currentEntry[0] == "0") && (!hasDecimal());
-}
-
-function isBufferFull() {
-    return (currentEntry.length == 10) || ((currentEntry.length == 9) && !currentEntry.includes("."));
+function isUserInputAccumulatorFull() {
+    return (userInputAccumulator.length == 10) || ((userInputAccumulator.length == 9) && !userInputAccumulator.includes("."));
 }
 
 function injectCommas() {
-    const decimalIndex = currentEntry.indexOf(".");
+    const decimalIndex = userInputAccumulator.indexOf(".");
     const whole = (decimalIndex !== -1)?
-                  currentEntry.slice(0, decimalIndex): currentEntry;
+                  userInputAccumulator.slice(0, decimalIndex): userInputAccumulator;
     const size = whole.length;
     console.log(`whole: ${whole}`);
 }
 
-function findKeyEl(e) {
-    const key = document.querySelector(`div[data-key="${e.key.toLowerCase()}"]`);
-    return key;
+function getPressedKeyElement(e) {
+    const KEY = document.querySelector(`div[data-key="${e.key.toLowerCase()}"]`);
+    return KEY;
 }
 
-function onInput (e) {
+function onUserInput (e) {
 
   const buttonEl = (e.type == "click")?
                       e.srcElement:
-                      findKeyEl(e);
+                      getPressedKeyElement(e);
   if (!buttonEl) {
       return;
   }
 
   switch (buttonEl.className) {
     case "button number":
-      const input = readInput(buttonEl);
+      const input = getButtonContent(buttonEl);
       console.log(`The input is: ${input}`)
-      if (!isBufferFull()) {
-        updateCurrentEntry(input);
+      if (!isUserInputAccumulatorFull()) {
+        updateUserInputAccumulator(input);
       } else {
         console.log("input buffer full");
       }
@@ -68,40 +46,40 @@ function onInput (e) {
       console.log(`An operator was chosen ${buttonEl.id}`);
       const operatorSwitch = function() {
           const ops = ["+", "-", "*", "/"];
-          return (entryIsEmpty())? true : false;
+          return (isUserInputAccumulatorEmpty())? true : false;
       }
       if (operatorSwitch()) {
-          infixArray.pop();
-          console.log(`operator switch detected, infix: ${infixArray}`);
+          OPERANDACCUMULATOR.pop();
+          console.log(`operator switch detected, infix: ${OPERANDACCUMULATOR}`);
       }
       if (!operatorSwitch()) {
-          infixArray.push(currentEntry.join(""));
+          OPERANDACCUMULATOR.push(userInputAccumulator.join(""));
       }
-      if (buttonEl.id !== "=") infixArray.push(buttonEl.id);
-      console.log(`The input symbols are ${infixArray}`);
+      if (buttonEl.id !== "=") OPERANDACCUMULATOR.push(buttonEl.id);
+      console.log(`The input symbols are ${OPERANDACCUMULATOR}`);
       console.log(`The operator is${buttonEl.id}`);
-      resetCurrentEntry();
+      clearUserInputAccumulator();
       const convertToPostFix = function() {
         const opPrecedence = {"=": -1, "+": 0, "-": 0, "/": 1, "*": 1};
         const stack = [];
         let postfixArray = [];
-        infixArray.forEach( function (el) {
-            if (!(Object.keys(opPrecedence).includes(el))) {
-                postfixArray.push(el);
-                console.log(`found an operand ${el}`);
-            } else if ((stack.length === 0) || (opPrecedence[el] > opPrecedence[stack[stack.length - 1]])) {
-                stack.push(el);
-                console.log(`found an operator ${el} and pushed to stack${stack}`);
+        OPERANDACCUMULATOR.forEach( function (item) {
+            if (!(Object.keys(opPrecedence).includes(item))) {
+                postfixArray.push(item);
+                console.log(`found an operand ${item}`);
+            } else if ((stack.length === 0) || (opPrecedence[item] > opPrecedence[stack[stack.length - 1]])) {
+                stack.push(item);
+                console.log(`found an operator ${item} and pushed to stack${stack}`);
             } else {
                 let canPush = false;
                 while (!canPush) {
                     const toRemove = stack.pop();
                     postfixArray.push(toRemove);
                     console.log(`removed ${toRemove} from stack: ${stack} postfix: ${postfixArray}`);
-                    canPush = (opPrecedence[el] > opPrecedence[stack[stack.length - 1]]) || (stack.length == 0);
+                    canPush = (opPrecedence[item] > opPrecedence[stack[stack.length - 1]]) || (stack.length == 0);
                 }
-                stack.push(el);
-                console.log(`added ${el} stack: ${stack} postfix: ${postfixArray}`);
+                stack.push(item);
+                console.log(`added ${item} stack: ${stack} postfix: ${postfixArray}`);
             }
 
         });
@@ -110,8 +88,8 @@ function onInput (e) {
         return postfixArray.join(" ");
       }
       const rpn = convertToPostFix();
-      calculator.clear();
-      let result = calculator.evaluateRPN(rpn);
+      CALCULATOR.clearAll();
+      let result = CALCULATOR.evaluateRpnExpr(rpn);
       console.log(`result is ${result}`);
       break;
     case "button other":
@@ -120,20 +98,19 @@ function onInput (e) {
   }
 }
 
-function readInput(el) {
-  return el.textContent;
+function getButtonContent(buttonElement) {
+  return buttonElement.textContent;
 }
-
-function updateCurrentEntry(input) {
+function updateUserInputAccumulator(input) {
   switch(input) {
     case ".":
-      if (!hasDecimal()) {
-        currentEntry.push(input);
+      if (!userInputHasDecimal()) {
+        userInputAccumulator.push(input);
       }
       break;
     case "0":
-      if (currentEntry[0] !== "0") {
-        currentEntry.push(input);
+      if (userInputAccumulator[0] !== "0") {
+        userInputAccumulator.push(input);
       }
       break;
     case "1":
@@ -145,35 +122,36 @@ function updateCurrentEntry(input) {
     case "7":
     case "8":
     case "9":
-      if (entryIsEmpty()){
-        currentEntry[0] = input;
+      if (isUserInputAccumulatorEmpty()){
+        userInputAccumulator[0] = input;
       } else {
-        currentEntry.push(input);
+        userInputAccumulator.push(input);
       }
       break;
     default:
       console.log("input invalid")
   }
 
-  console.log(currentEntry);
+  console.log(userInputAccumulator);
+}
+function clearUserInputAccumulator() {
+    userInputAccumulator = ["0"];
 }
 
-function resetCurrentEntry() {
-    currentEntry = ["0"];
-}
 
-const calculator = {
-  stack: [],
-  push: function(value) {
-      this.stack.push(value);
-  },
-  evaluateRPN: function(string) {
-      const operators = ["+", "-", "*", "/"];
-      const tokens = string.split(" ")
-                .map( (el) => (operators.includes(el)) ? el : Number(el) );
-      console.log(tokens);
-      tokens.forEach( (el) => {
-        switch(el) {
+let userInputAccumulator = ["0"];
+const OPERANDACCUMULATOR = [];
+const CALCULATOR = {
+  operandStack: [],
+  push: function (operand) { this.operandStack.push(operand); },
+  clearAll: function() { this.operandStack = []; },
+  evaluateRpnExpr: function(expression) {
+      const OPERATORS = ["+", "-", "*", "/"];
+      const TOKENS = expression.split(" ")
+                     .map( (item) => (OPERATORS.includes(item)) ? item : Number(item) );
+
+      TOKENS.forEach( (item) => {
+        switch(item) {
           case "+":
             this.add();
             break;
@@ -187,58 +165,41 @@ const calculator = {
             this.divide();
             break;
           default:
-            this.stack.push(el);
+            this.operandStack.push(item);
         }
       });
-      return this.stack;
+      return this.operandStack;
   },
+  hasEnoughOperands: function() { return (this.operandStack.length >= 2)? true: false },
   add: function() {
-    if (this.stack.length >= 2) {
-      const result = this.stack.pop() + this.stack.pop();
-      this.stack.push(result);
-      return result;
-    } else {
-      console.log('insufficient operands');
+    if (this.hasEnoughOperands()) {
+      const SUM = this.operandStack.pop() + this.operandStack.pop();
+      this.operandStack.push(SUM);
     }
   },
   subtract: function() {
-    if (this.stack.length >= 2) {
-      const result = -1 * (this.stack.pop() - this.stack.pop());
-      this.stack.push(result);
-      return result;
-    } else {
-      console.log('insufficient operands');
+    if (this.hasEnoughOperands()) {
+      const DIFFERENCE = -1 * (this.operandStack.pop() - this.operandStack.pop());
+      this.operandStack.push(DIFFERENCE);
     }
   },
   multiply: function() {
-    if (this.stack.length >= 2) {
-      const result = this.stack.pop() * this.stack.pop();
-      this.stack.push(result);
-      return result;
-    } else {
-      console.log('insufficient operands');
+    if (this.hasEnoughOperands()) {
+      const PRODUCT = this.operandStack.pop() * this.operandStack.pop();
+      this.operandStack.push(PRODUCT);
     }
   },
   divide: function() {
-    if (this.stack.length >= 2) {
-      const result = 1 / (this.stack.pop() / this.stack.pop());
-      this.stack.push(result);
-      return result;
-    } else {
-      console.log('insufficient operands');
+    if (this.hasEnoughOperands()) {
+      const DIVISOR = this.operandStack.pop();
+      //if (DIVISOR !== 0) {
+        const DIVIDED = 1 / (DIVISOR / this.operandStack.pop());
+        this.operandStack.push(DIVIDED);
+      //}
     }
-  },
-  clear: function() { this.stack = [];}
+  }
 }
 
-let currentEntry = ["0"];
-const infixArray = [];
-
-
-const buttonEls = document.querySelectorAll(".button");
-console.log("All buttons");
-console.log(buttonEls);
-
-
-buttonEls.forEach( (button) => button.addEventListener('click', onInput));
-document.addEventListener('keydown', onInput);
+const buttonElements = document.querySelectorAll(".button");
+buttonElements.forEach( (button) => button.addEventListener('click', onUserInput));
+document.addEventListener('keydown', onUserInput);
