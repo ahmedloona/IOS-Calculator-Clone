@@ -1,22 +1,4 @@
 
-/*
-function add(operandOne, operandTwo) {
-  return operandOne + operandTwo;
-}
-
-function subtract(operandOne, operandTwo) {
-  return operandOne - operandTwo;
-}
-
-function multiply(operandOne, operandTwo) {
-  return operandOne * operandTwo;
-}
-
-function divide(operandOne, operandTwo) {
-  return operandOne/operandTwo;
-}
-*/
-
 function operate(operator, operandOne, operandTwo) {
   let operation = undefined;
   switch (operator) {
@@ -84,6 +66,53 @@ function onInput (e) {
       break;
     case "button operator":
       console.log(`An operator was chosen ${buttonEl.id}`);
+      const operatorSwitch = function() {
+          const ops = ["+", "-", "*", "/"];
+          return (entryIsEmpty())? true : false;
+      }
+      if (operatorSwitch()) {
+          infixArray.pop();
+          console.log(`operator switch detected, infix: ${infixArray}`);
+      }
+      if (!operatorSwitch()) {
+          infixArray.push(currentEntry.join(""));
+      }
+      if (buttonEl.id !== "=") infixArray.push(buttonEl.id);
+      console.log(`The input symbols are ${infixArray}`);
+      console.log(`The operator is${buttonEl.id}`);
+      resetCurrentEntry();
+      const convertToPostFix = function() {
+        const opPrecedence = {"=": -1, "+": 0, "-": 0, "/": 1, "*": 1};
+        const stack = [];
+        let postfixArray = [];
+        infixArray.forEach( function (el) {
+            if (!(Object.keys(opPrecedence).includes(el))) {
+                postfixArray.push(el);
+                console.log(`found an operand ${el}`);
+            } else if ((stack.length === 0) || (opPrecedence[el] > opPrecedence[stack[stack.length - 1]])) {
+                stack.push(el);
+                console.log(`found an operator ${el} and pushed to stack${stack}`);
+            } else {
+                let canPush = false;
+                while (!canPush) {
+                    const toRemove = stack.pop();
+                    postfixArray.push(toRemove);
+                    console.log(`removed ${toRemove} from stack: ${stack} postfix: ${postfixArray}`);
+                    canPush = (opPrecedence[el] > opPrecedence[stack[stack.length - 1]]) || (stack.length == 0);
+                }
+                stack.push(el);
+                console.log(`added ${el} stack: ${stack} postfix: ${postfixArray}`);
+            }
+
+        });
+        postfixArray = postfixArray.concat(stack.reverse());
+        console.log(`RPN ${postfixArray}`);
+        return postfixArray.join(" ");
+      }
+      const rpn = convertToPostFix();
+      calculator.clear();
+      let result = calculator.evaluateRPN(rpn);
+      console.log(`result is ${result}`);
       break;
     case "button other":
       console.log(`other was chosen ${buttonEl.id}`);
@@ -129,48 +158,82 @@ function updateCurrentEntry(input) {
   console.log(currentEntry);
 }
 
-const currentEntry = ["0"];
+function resetCurrentEntry() {
+    currentEntry = ["0"];
+}
 
 const calculator = {
-  infixArray : [],
-  operands: [3, 2],
+  stack: [],
+  push: function(value) {
+      this.stack.push(value);
+  },
+  evaluateRPN: function(string) {
+      const operators = ["+", "-", "*", "/"];
+      const tokens = string.split(" ")
+                .map( (el) => (operators.includes(el)) ? el : Number(el) );
+      console.log(tokens);
+      tokens.forEach( (el) => {
+        switch(el) {
+          case "+":
+            this.add();
+            break;
+          case "-":
+            this.subtract();
+            break;
+          case "*":
+            this.multiply();
+            break;
+          case "/":
+            this.divide();
+            break;
+          default:
+            this.stack.push(el);
+        }
+      });
+      return this.stack;
+  },
   add: function() {
-    if (this.operands.length >= 2) {
-      const result = this.operands.pop() + this.operands.pop();
-      this.operands.push(result);
+    if (this.stack.length >= 2) {
+      const result = this.stack.pop() + this.stack.pop();
+      this.stack.push(result);
       return result;
     } else {
       console.log('insufficient operands');
     }
   },
   subtract: function() {
-    if (this.operands.length >= 2) {
-      const result = -1 * (this.operands.pop() - this.operands.pop());
-      this.operands.push(result);
+    if (this.stack.length >= 2) {
+      const result = -1 * (this.stack.pop() - this.stack.pop());
+      this.stack.push(result);
       return result;
     } else {
       console.log('insufficient operands');
     }
   },
   multiply: function() {
-    if (this.operands.length >= 2) {
-      const result = this.operands.pop() * this.operands.pop();
-      this.operands.push(result);
+    if (this.stack.length >= 2) {
+      const result = this.stack.pop() * this.stack.pop();
+      this.stack.push(result);
       return result;
     } else {
       console.log('insufficient operands');
     }
   },
   divide: function() {
-    if (this.operands.length >= 2) {
-      const result = this.operands.pop() / this.operands.pop();
-      this.operands.push(result);
+    if (this.stack.length >= 2) {
+      const result = 1 / (this.stack.pop() / this.stack.pop());
+      this.stack.push(result);
       return result;
     } else {
       console.log('insufficient operands');
     }
   },
+  clear: function() { this.stack = [];}
 }
+
+let currentEntry = ["0"];
+const infixArray = [];
+
 
 const buttonEls = document.querySelectorAll(".button");
 console.log("All buttons");
