@@ -21,6 +21,9 @@
 
 ---
 
+# KNOWN ISSUES
+* Some trigger allows the user input to exceed the 9 digit limit. To fix.
+
 # DEMO
 
-[IOS Calculator clone]()
+[IOS Calculator clone](https://ahmedloona.github.io/IOS-Calculator-Clone/)
